@@ -1,5 +1,6 @@
 import { Highlight, MessageType, HighlightColor, HighlightPosition } from '../types';
 import { generateId, getColorHex, debounce } from '../shared/utils';
+import { AssistantUI } from './assistant-ui';
 
 // Simple types for response
 interface AIResponsePayload {
@@ -14,12 +15,15 @@ class HighlightManager {
     private aiPanel: HTMLElement | null = null;
     private selectedRange: Range | null = null;
     private selectionTimeout: any;
+    private assistantUI: AssistantUI;
 
     constructor() {
+        this.assistantUI = new AssistantUI();
         this.init();
     }
 
     private async init() {
+        this.assistantUI.mount();
         this.setupSelectionListener();
         this.setupKeyboardShortcuts();
         this.setupMessageListener();

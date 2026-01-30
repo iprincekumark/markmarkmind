@@ -1,3 +1,4 @@
+import './popup.css';
 import '../types/index';
 import { Highlight, HighlightColor, AIInsight, InsightType } from '../types';
 import { storage } from '../shared/storage';
