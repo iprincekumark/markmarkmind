@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "MarkMind",
     "version": "1.0.0",
-    "description": "Privacy-first web highlighter that helps you think, not just collect. Highlight text, add notes, organize knowledge - all stored locally on your device.",
+    "description": "Privacy-first web highlighter. Highlight text, add notes, and organize knowledge - all stored locally on your device.",
     "permissions": [
         "storage",
         "activeTab",

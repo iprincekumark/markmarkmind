@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>MarkMind</title>
+    <link rel="stylesheet" href="../src/popup/popup.css">
+    <style>
+        /* Force styles for the mock to ensure it looks perfect */
+        body {
+            width: 375px;
+            height: 600px;
+            background: #f9f9f9;
+            overflow: hidden;
+        }
+
+        .tab-content {
+            display: block;
+        }
+
+        .highlight-card {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Search section -->
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search highlights..." value="">
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="recent">Recent</button>
+            <button class="tab" data-tab="collections">Collections</button>
+            <button class="tab" data-tab="settings">Settings</button>
+        </div>
+
+        <!-- Recent highlights view -->
+        <div id="recentView" class="tab-content active">
+            <div id="highlightsList">
+
+                <!-- Sample 1 -->
+                <div class="highlight-card color-yellow">
+                    <div class="highlight-text">The "Local-First" software movement is calling for a return to software
+                        that you own, where your data stays on your device.</div>
+                    <div class="highlight-meta">
+                        <span>The Future of Software</span>
+                        <span>Just now</span>
+                    </div>
+                </div>
+
+                <!-- Sample 2 -->
+                <div class="highlight-card color-green">
+                    <div class="highlight-text">IndexedDB is a low-level API for client-side storage of significant
+                        amounts of structured data, including files/blobs.</div>
+                    <div class="highlight-meta">
+                        <span>MDN Web Docs</span>
+                        <span>2 hours ago</span>
+                    </div>
+                </div>
+
+                <!-- Sample 3 -->
+                <div class="highlight-card color-pink">
+                    <div class="highlight-text">Design is not just what it looks like and feels like. Design is how it
+                        works.</div>
+                    <div class="highlight-meta">
+                        <span>Steve Jobs Quotes</span>
+                        <span>Yesterday</span>
+                    </div>
+                </div>
+
+                <!-- Sample 4 -->
+                <div class="highlight-card color-blue">
+                    <div class="highlight-text">Manifest V3 platform changes are intended to improve the privacy,
+                        security, and performance of extensions.</div>
+                    <div class="highlight-meta">
+                        <span>Chrome Developers</span>
+                        <span>Feb 12, 2025</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
