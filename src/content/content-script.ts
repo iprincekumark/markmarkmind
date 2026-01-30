@@ -1,10 +1,17 @@
 import { Highlight, MessageType, HighlightColor, HighlightPosition } from '../types';
 import { generateId, getColorHex, debounce } from '../shared/utils';
 
+// Simple types for response
+interface AIResponsePayload {
+    content?: string;
+    error?: string;
+}
+
 class HighlightManager {
     private highlights: Map<string, Highlight> = new Map();
     private toolbar: HTMLElement | null = null;
     private menu: HTMLElement | null = null;
+    private aiPanel: HTMLElement | null = null;
     private selectedRange: Range | null = null;
     private selectionTimeout: any;
 
@@ -140,7 +147,28 @@ class HighlightManager {
                 window.getSelection()?.removeAllRanges();
             };
             this.toolbar!.appendChild(btn);
+            this.toolbar!.appendChild(btn);
         });
+
+        // AI Magic Button
+        const magicBtn = document.createElement('button');
+        magicBtn.className = 'markmarkmind-magic-btn';
+        magicBtn.innerHTML = '✨'; // Magic wand
+        magicBtn.title = 'Explain or Summarize';
+        magicBtn.style.backgroundColor = '#f8fafc';
+        magicBtn.style.color = '#3b82f6';
+        magicBtn.style.border = '1px solid #e2e8f0';
+        magicBtn.onclick = (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (this.selectedRange) {
+                const text = this.selectedRange.toString();
+                const toolbarRect = this.toolbar!.getBoundingClientRect();
+                this.handleAIAction(MessageType.EXPLAIN_SELECTION, text, toolbarRect.left, toolbarRect.bottom + 10);
+            }
+            this.hideToolbar();
+        };
+        this.toolbar.appendChild(magicBtn);
 
         document.body.appendChild(this.toolbar);
     }
@@ -168,8 +196,17 @@ class HighlightManager {
             createdAt: Date.now(),
             updatedAt: Date.now(),
             position: position,
-            collections: [],
-            tags: []
+            collectionIds: [],
+            tags: [],
+            // Initialize new required fields
+            concepts: [],
+            sentiment: 0,
+            readingLevel: 'elementary' as any, // Default, will be updated by AI
+            relatedHighlightIds: [],
+            questions: [],
+            keyPhrases: [],
+            topics: [],
+            referenceCount: 0
         };
 
         try {
@@ -203,8 +240,35 @@ class HighlightManager {
             startOffset: startOffset,
             length: range.toString().length,
             contextBefore: range.toString().substring(0, 20), // Placeholder
-            contextAfter: ''
+            contextAfter: '',
+            xpath: this.getXPath(parent),
+            textFingerprint: this.generateFingerprint(range.toString())
         };
+    }
+
+    private getXPath(element: Element): string {
+        if (element.id !== '') return 'id("' + element.id + '")';
+        if (element === document.body) return element.tagName;
+
+        let ix = 0;
+        const siblings = element.parentNode ? (element.parentNode as Element).childNodes : [];
+        for (let i = 0; i < siblings.length; i++) {
+            const sibling = siblings[i];
+            if (sibling === element) return this.getXPath(element.parentNode as Element) + '/' + element.tagName + '[' + (ix + 1) + ']';
+            if (sibling.nodeType === 1 && (sibling as Element).tagName === element.tagName) ix++;
+        }
+        return '';
+    }
+
+    private generateFingerprint(text: string): string {
+        let hash = 0;
+        if (text.length === 0) return hash.toString();
+        for (let i = 0; i < text.length; i++) {
+            const char = text.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return hash.toString();
     }
 
     private generateSelector(element: Element): string {
@@ -355,6 +419,84 @@ class HighlightManager {
             this.menu.remove();
             this.menu = null;
         }
+    }
+
+    private async handleAIAction(type: MessageType, text: string, x: number, y: number) {
+        this.showAIPanel('Thinking...', x, y, true);
+        try {
+            const response = await chrome.runtime.sendMessage({
+                type: type,
+                payload: { text }
+            });
+
+            if (response && response.content) {
+                this.showAIPanel(response.content, x, y, false);
+            } else {
+                this.showAIPanel('No insight could be generated.', x, y, false);
+            }
+        } catch (error) {
+            this.showAIPanel('Error connecting to AI service.', x, y, false);
+        }
+    }
+
+    private showAIPanel(content: string, x: number, y: number, isLoading: boolean) {
+        if (this.aiPanel) this.aiPanel.remove();
+
+        this.aiPanel = document.createElement('div');
+        this.aiPanel.className = 'markmarkmind-ai-panel';
+        this.aiPanel.style.left = `${x}px`;
+        this.aiPanel.style.top = `${y}px`;
+
+        // Basic styles - SHOULD be in CSS but injecting here for now or update CSS later
+        Object.assign(this.aiPanel.style, {
+            position: 'absolute',
+            zIndex: '10001',
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            padding: '12px',
+            maxWidth: '300px',
+            fontSize: '14px',
+            lineHeight: '1.5',
+            color: '#1e293b',
+            border: '1px solid #e2e8f0'
+        });
+
+        if (isLoading) {
+            this.aiPanel.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="markmarkmind-spinner"></div>
+                    <span>Analyzing...</span>
+                </div>
+            `;
+            // Add spinner style if needed or use simple text
+        } else {
+            this.aiPanel.innerHTML = `
+                <div style="margin-bottom: 8px; font-weight: 600; color: #3b82f6;">MarkMind Insight</div>
+                <div>${content}</div>
+                <button class="markmarkmind-close-btn" style="position: absolute; top: 8px; right: 8px; border: none; background: none; cursor: pointer; font-size: 16px;">×</button>
+            `;
+
+            const closeBtn = this.aiPanel.querySelector('.markmarkmind-close-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    if (this.aiPanel) this.aiPanel.remove();
+                    this.aiPanel = null;
+                });
+            }
+        }
+
+        document.body.appendChild(this.aiPanel);
+
+        // Click outside to close
+        const clickHandler = (e: MouseEvent) => {
+            if (this.aiPanel && !this.aiPanel.contains(e.target as Node)) {
+                this.aiPanel.remove();
+                this.aiPanel = null;
+                document.removeEventListener('mousedown', clickHandler);
+            }
+        };
+        setTimeout(() => document.addEventListener('mousedown', clickHandler), 100);
     }
 
     private setupKeyboardShortcuts() {

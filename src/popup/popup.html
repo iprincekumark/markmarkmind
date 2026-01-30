@@ -1,58 +1,190 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>MarkMind</title>
-    <link rel="stylesheet" href="popup.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarkMind AI</title>
+    <!-- CSS will be injected by webpack -->
 </head>
 
-<body>
-    <div id="app">
-        <!-- Search section -->
-        <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Search highlights...">
-        </div>
-
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab active" data-tab="recent">Recent</button>
-            <button class="tab" data-tab="collections">Collections</button>
-            <button class="tab" data-tab="settings">Settings</button>
-        </div>
-
-        <!-- Recent highlights view -->
-        <div id="recentView" class="tab-content active">
-            <div id="highlightsList"></div>
-            <div id="emptyState" class="empty-state hidden">No highlights found</div>
-        </div>
-
-        <!-- Collections view -->
-        <div id="collectionsView" class="tab-content">
-            <div id="collectionsList"></div>
-            <div class="empty-state">Collections coming soon</div>
-        </div>
-
-        <!-- Settings view -->
-        <div id="settingsView" class="tab-content">
-            <div class="setting-group">
-                <label>Default Highlight Color:</label>
-                <select id="defaultColor">
-                    <option value="yellow">Yellow</option>
-                    <option value="green">Green</option>
-                    <option value="blue">Blue</option>
-                    <option value="pink">Pink</option>
-                </select>
+<body class="overflow-hidden bg-slate-50 flex flex-col h-[600px]">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-10">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center space-x-2">
+                <div
+                    class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                    M
+                </div>
+                <h1
+                    class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">
+                    MarkMind
+                </h1>
+                <span
+                    class="px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 text-xs font-bold border border-blue-100">AI</span>
             </div>
-            <div class="setting-group">
-                <label>
-                    <input type="checkbox" id="keyboardShortcuts">
-                    Enable keyboard shortcuts
-                </label>
-            </div>
-            <button id="exportBtn" class="btn-primary">Export All Data</button>
+            <button id="btn-dashboard"
+                class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all"
+                title="Open Dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path
+                        d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 002-2h2a2 2 0 002 2v2a2 2 0 00-2 2h-2a2 2 0 00-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+            </button>
         </div>
-    </div>
+
+        <!-- Search -->
+        <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                        clip-rule="evenodd" />
+                </svg>
+            </div>
+            <input type="text" id="searchInput"
+                class="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
+                placeholder="Search highlights, concepts...">
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex border-b border-slate-200 bg-white">
+        <button class="nav-tab active flex-1 text-center" data-tab="highlights">Highlights</button>
+        <button class="nav-tab flex-1 text-center" data-tab="insights">
+            AI Insights
+            <span
+                class="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-600 hidden"
+                id="insight-badge">New</span>
+        </button>
+        <button class="nav-tab flex-1 text-center" data-tab="settings">Settings</button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-4 custom-scrollbar" id="main-content">
+
+        <!-- Tab: Highlights -->
+        <div id="tab-highlights" class="space-y-4">
+            <!-- Loading State -->
+            <div id="highlights-loading" class="hidden flex flex-col items-center justify-center py-10 space-y-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <p class="text-sm text-slate-500">Loading your knowledge base...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="highlights-empty" class="hidden flex flex-col items-center justify-center py-12 text-center">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-sm font-medium text-slate-900">No highlights yet</h3>
+                <p class="mt-1 text-sm text-slate-500 max-w-xs">Select text on any webpage to create your first
+                    highlight.</p>
+            </div>
+
+            <!-- List Container -->
+            <div id="highlights-list" class="space-y-3">
+                <!-- Highlights will be injected here -->
+            </div>
+        </div>
+
+        <!-- Tab: AI Insights -->
+        <div id="tab-insights" class="hidden space-y-4">
+            <div class="bg-indigo-50 rounded-lg p-4 mb-4 border border-indigo-100">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-indigo-800">Knowledge Analysis</h3>
+                        <div class="mt-1 text-xs text-indigo-700">
+                            Based on your recent reading habits and topics.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="insights-list" class="space-y-3">
+                <!-- Insights will be injected here -->
+            </div>
+
+            <button id="btn-generate-insights" class="w-full btn-primary flex items-center justify-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Generate New Insights</span>
+            </button>
+        </div>
+
+        <!-- Tab: Settings -->
+        <div id="tab-settings" class="hidden space-y-6">
+            <!-- AI Settings -->
+            <section class="space-y-3">
+                <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">AI Configuration</h3>
+
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-medium text-slate-900">AI Features</span>
+                        <span class="text-xs text-slate-500">Enable smart summarization</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="setting-ai-enabled" class="sr-only peer">
+                        <div
+                            class="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600">
+                        </div>
+                    </label>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-slate-700">AI Provider</label>
+                    <select id="setting-ai-provider"
+                        class="block w-full pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border text-slate-900">
+                        <option value="local">Local (Privacy First)</option>
+                        <option value="openai">OpenAI (GPT-4)</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                        <option value="gemini">Google (Gemini)</option>
+                    </select>
+                </div>
+
+                <div id="api-key-container" class="space-y-2 hidden">
+                    <label class="block text-sm font-medium text-slate-700">API Key</label>
+                    <input type="password" id="setting-api-key"
+                        class="block w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        placeholder="sk-...">
+                </div>
+            </section>
+
+            <!-- General Settings -->
+            <section class="space-y-3">
+                <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Preferences</h3>
+
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                    <span class="text-sm font-medium text-slate-900">Dark Mode</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="setting-dark-mode" class="sr-only peer">
+                        <div
+                            class="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600">
+                        </div>
+                    </label>
+                </div>
+            </section>
+
+            <div class="pt-4 border-t border-slate-200 text-center">
+                <span class="text-xs text-slate-400">MarkMind v2.0.0</span>
+            </div>
+        </div>
+    </main>
+
     <script src="popup.js"></script>
 </body>
 

@@ -161,13 +161,22 @@ class ConceptLinker {
                 maxLinks: maxResults
             });
 
-            return relatedIds.map((id, index) => ({
-                highlight: candidateHighlights.find(h => h.id === id)!,
-                similarity: 0.9 - (index * 0.1), // Descending scores
-                matchType: 'ai_semantic',
-                sharedConcepts: [],
-                reason: 'AI identified semantic relationship'
-            })).filter(r => r.highlight);
+            const results: RelatedHighlight[] = [];
+
+            relatedIds.forEach((id, index) => {
+                const highlight = candidateHighlights.find(h => h.id === id);
+                if (highlight) {
+                    results.push({
+                        highlight,
+                        similarity: 0.9 - (index * 0.1),
+                        matchType: 'ai_semantic',
+                        sharedConcepts: [],
+                        reason: 'AI identified semantic relationship'
+                    });
+                }
+            });
+
+            return results;
         } catch (error) {
             console.error('AI-based linking failed:', error);
             return [];

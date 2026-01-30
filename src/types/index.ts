@@ -117,7 +117,7 @@ export interface AIInsight {
     relatedHighlightIds: string[];
     confidence: number;
     createdAt: number;
-    dismissed: boolean;
+    dismissed: number; // 0 or 1 (boolean not indexable in strict IDB)
 }
 
 export enum InsightType {
@@ -170,3 +170,24 @@ export enum Theme {
     Dark = 'dark',
     Auto = 'auto'
 }
+
+export enum MessageType {
+    GET_HIGHLIGHTS = 'GET_HIGHLIGHTS',
+    SAVE_HIGHLIGHT = 'SAVE_HIGHLIGHT',
+    DELETE_HIGHLIGHT = 'DELETE_HIGHLIGHT',
+    UPDATE_HIGHLIGHT = 'UPDATE_HIGHLIGHT',
+    // AI Related
+    SUMMARIZE_SELECTION = 'SUMMARIZE_SELECTION',
+    EXPLAIN_SELECTION = 'EXPLAIN_SELECTION',
+    GET_AI_INSIGHTS = 'GET_AI_INSIGHTS',
+    // Search & Settings
+    SEARCH_HIGHLIGHTS = 'SEARCH_HIGHLIGHTS',
+    GET_SETTINGS = 'GET_SETTINGS'
+}
+
+export interface Message {
+    type: MessageType;
+    payload?: any;
+}
+
+export * from './ai';

@@ -1,7 +1,6 @@
-import { StorageManager } from '../shared/storage';
-import { MessageType, Message } from '../types';
-
-const storage = StorageManager.getInstance();
+import { storage } from '../shared/storage';
+import { MessageType, Message, SummaryStyle, HighlightColor } from '../types';
+import { aiService } from '../shared/ai-service';
 
 chrome.runtime.onInstalled.addListener(async () => {
     await storage.init();
@@ -45,7 +44,45 @@ async function handleMessage(message: Message, sendResponse: (response?: any) =>
                 sendResponse(settings);
                 break;
 
-            // Additional handlers for collections/tags if needed
+            // AI Features
+            case MessageType.EXPLAIN_SELECTION:
+                await aiService.initialize();
+                const explanation = await aiService.explainText(message.payload.text);
+                sendResponse({ content: explanation });
+                break;
+
+            case MessageType.SUMMARIZE_SELECTION:
+                await aiService.initialize();
+                // Create a temporary highlight object for the service
+                const tempHighlight = {
+                    text: message.payload.text,
+                    id: 'temp',
+                    url: '',
+                    pageTitle: '',
+                    note: '',
+                    color: HighlightColor.Yellow,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    collectionIds: [],
+                    tags: [],
+                    position: {} as any,
+                    concepts: [],
+                    sentiment: 0,
+                    readingLevel: 'elementary' as any,
+                    relatedHighlightIds: [],
+                    questions: [],
+                    keyPhrases: [],
+                    topics: [],
+                    referenceCount: 0
+                };
+
+                const summary = await aiService.summarizeHighlights({
+                    highlights: [tempHighlight],
+                    style: SummaryStyle.Concise,
+                    maxLength: 150
+                });
+                sendResponse({ content: summary });
+                break;
 
             default:
                 console.warn('Unknown message type:', message.type);

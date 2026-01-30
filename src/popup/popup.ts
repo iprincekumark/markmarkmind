@@ -1,144 +1,176 @@
-import { StorageManager } from '../shared/storage';
-import { Highlight, ExtensionSettings } from '../types';
-import { formatDate, debounce, getColorHex } from '../shared/utils';
+import '../types/index';
+import { Highlight, HighlightColor, AIInsight, InsightType } from '../types';
+import { storage } from '../shared/storage';
+// In a real implementation, we might communicate with background script, 
+// but for MVP popup can access storage directly.
 
-class PopupManager {
-    private storage: StorageManager;
-    private searchInput: HTMLInputElement;
-    private highlightsList: HTMLElement;
-    private collectionsList: HTMLElement;
+document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize UI
+    const tabs = document.querySelectorAll('.nav-tab');
+    const tabContents = {
+        'highlights': document.getElementById('tab-highlights'),
+        'insights': document.getElementById('tab-insights'),
+        'settings': document.getElementById('tab-settings')
+    };
 
-    constructor() {
-        this.storage = StorageManager.getInstance();
-        this.searchInput = document.getElementById('searchInput') as HTMLInputElement;
-        this.highlightsList = document.getElementById('highlightsList') as HTMLElement;
-        this.collectionsList = document.getElementById('collectionsList') as HTMLElement;
+    // Tab Switching Logic
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Remove active class from all tabs
+            tabs.forEach(t => t.classList.remove('active', 'text-blue-600', 'border-blue-600'));
+            tabs.forEach(t => t.classList.add('border-transparent'));
 
-        this.init();
-    }
+            // Add active class to clicked tab
+            tab.classList.add('active', 'text-blue-600', 'border-blue-600');
+            tab.classList.remove('border-transparent');
 
-    private async init() {
-        await this.storage.init();
-        this.setupTabs();
-        this.setupSearch();
-        this.setupSettings();
-        this.loadRecentHighlights();
-    }
+            // Hide all contents
+            Object.values(tabContents).forEach(content => content?.classList.add('hidden'));
 
-    private setupTabs() {
-        const tabs = document.querySelectorAll('.tab');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                const target = e.target as HTMLElement;
-                const tabName = target.dataset.tab;
+            // Show selected content
+            const tabName = tab.getAttribute('data-tab');
+            if (tabName && tabContents[tabName as keyof typeof tabContents]) {
+                tabContents[tabName as keyof typeof tabContents]?.classList.remove('hidden');
+            }
+        });
+    });
 
-                // Update tabs UI
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                target.classList.add('active');
+    // Settings Logic
+    const aiProviderSelect = document.getElementById('setting-ai-provider') as HTMLSelectElement;
+    const apiKeyContainer = document.getElementById('api-key-container');
 
-                // Update content UI
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                document.getElementById(`${tabName}View`)?.classList.add('active');
-
-                if (tabName === 'recent') this.loadRecentHighlights();
-                if (tabName === 'collections') this.loadCollections();
-            });
+    if (aiProviderSelect && apiKeyContainer) {
+        aiProviderSelect.addEventListener('change', () => {
+            if (aiProviderSelect.value === 'local') {
+                apiKeyContainer.classList.add('hidden');
+            } else {
+                apiKeyContainer.classList.remove('hidden');
+            }
         });
     }
 
-    private setupSearch() {
-        this.searchInput.addEventListener('input', debounce(async (e: Event) => {
+    // Load Highlights
+    await loadHighlights();
+
+    // Event Listeners for Search
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
             const query = (e.target as HTMLInputElement).value;
-            if (!query) {
-                this.loadRecentHighlights();
-                return;
-            }
-
-            const results = await this.storage.searchHighlights(query);
-            this.displayHighlights(results);
-        }, 300));
+            filterHighlights(query);
+        });
     }
 
-    private async loadRecentHighlights() {
-        const highlights = await this.storage.getAllHighlights();
-        this.displayHighlights(highlights.slice(0, 20));
-    }
+    // Load User Settings
+    await loadSettings();
+});
 
-    private displayHighlights(highlights: Highlight[]) {
-        this.highlightsList.innerHTML = '';
-        const emptyState = document.getElementById('emptyState');
+async function loadHighlights() {
+    const listContainer = document.getElementById('highlights-list');
+    const emptyState = document.getElementById('highlights-empty');
+    if (!listContainer) return;
+
+    try {
+        const highlights = await storage.getAllHighlights();
 
         if (highlights.length === 0) {
             emptyState?.classList.remove('hidden');
             return;
         }
+
         emptyState?.classList.add('hidden');
+        listContainer.innerHTML = '';
 
-        highlights.forEach(highlight => {
-            const card = this.createHighlightCard(highlight);
-            this.highlightsList.appendChild(card);
-        });
-    }
+        highlights
+            .sort((a, b) => b.createdAt - a.createdAt)
+            .forEach(highlight => {
+                const element = createHighlightElement(highlight);
+                listContainer.appendChild(element);
+            });
 
-    private createHighlightCard(highlight: Highlight): HTMLElement {
-        const div = document.createElement('div');
-        div.className = `highlight-card color-${highlight.color}`;
-
-        div.innerHTML = `
-      <div class="highlight-text">${highlight.text}</div>
-      <div class="highlight-meta">
-        <span>${highlight.pageTitle.substring(0, 30)}...</span>
-        <span>${formatDate(highlight.createdAt)}</span>
-      </div>
-    `;
-
-        div.addEventListener('click', () => {
-            chrome.tabs.create({ url: highlight.url });
-        });
-
-        return div;
-    }
-
-    private loadCollections() {
-        // Placeholder for collections logic
-        this.collectionsList.innerHTML = '<div style="text-align:center;color:#999;margin-top:20px">Feature coming soon</div>';
-    }
-
-    private async setupSettings() {
-        const defaultColorSelect = document.getElementById('defaultColor') as HTMLSelectElement;
-        const shortcutsCheckbox = document.getElementById('keyboardShortcuts') as HTMLInputElement;
-        const exportBtn = document.getElementById('exportBtn');
-
-        const settings = await this.storage.getSettings();
-        defaultColorSelect.value = settings.defaultColor;
-        shortcutsCheckbox.checked = settings.keyboardShortcutsEnabled;
-
-        defaultColorSelect.addEventListener('change', async () => {
-            settings.defaultColor = defaultColorSelect.value as any;
-            await this.storage.saveSettings(settings);
-        });
-
-        shortcutsCheckbox.addEventListener('change', async () => {
-            settings.keyboardShortcutsEnabled = shortcutsCheckbox.checked;
-            await this.storage.saveSettings(settings);
-        });
-
-        exportBtn?.addEventListener('click', () => this.exportData());
-    }
-
-    private async exportData() {
-        const data = await this.storage.exportAllData();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `markmind-export-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Failed to load highlights:', error);
     }
 }
 
-new PopupManager();
+function createHighlightElement(highlight: Highlight): HTMLElement {
+    const div = document.createElement('div');
+    div.className = `highlight-item border-${highlight.color}-500 bg-white hover:bg-slate-50 border-l-4 pl-3 py-3 rounded-r-md transition-all shadow-sm mb-3`;
+
+    // Map color enum to Tailwind class (simplified)
+    const colorMap: Record<string, string> = {
+        'yellow': 'yellow',
+        'green': 'green',
+        'blue': 'blue',
+        'pink': 'pink',
+        'purple': 'purple',
+        'orange': 'orange'
+    };
+    const colorName = colorMap[highlight.color] || 'yellow';
+    div.style.borderLeftColor = `var(--color-${colorName}-500, #eab308)`; // Fallback style if class mapping fails or add style directly
+
+    // Actually, Tailwind classes for dynamic colors need to be safelisted or present in source.
+    // For safer implementation, let's use inline style for the border or specific classes if we fix the classes.
+    // Let's replace the className above with specific color classes logic
+    div.classList.remove(`border-${highlight.color}-500`);
+    div.classList.add(`border-${colorName}-500`);
+
+    const date = new Date(highlight.createdAt).toLocaleDateString(undefined, {
+        month: 'short', day: 'numeric'
+    });
+
+    const topicsHtml = highlight.topics && highlight.topics.length > 0
+        ? `<div class="mt-2 flex flex-wrap gap-1">
+            ${highlight.topics.slice(0, 2).map(t =>
+            `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">#${t}</span>`
+        ).join('')}
+           </div>`
+        : '';
+
+    div.innerHTML = `
+        <div class="flex justify-between items-start mb-1">
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide truncate max-w-[200px]" title="${highlight.pageTitle}">${highlight.pageTitle}</h4>
+            <span class="text-xs text-slate-400 whitespace-nowrap">${date}</span>
+        </div>
+        <p class="text-sm text-slate-800 leading-relaxed line-clamp-3">${highlight.text}</p>
+        ${highlight.note ? `<div class="mt-2 text-xs text-slate-500 italic bg-yellow-50 p-2 rounded border border-yellow-100">"${highlight.note}"</div>` : ''}
+        ${topicsHtml}
+    `;
+
+    div.addEventListener('click', () => {
+        // Find the tab text
+        chrome.tabs.create({ url: highlight.url });
+    });
+
+    return div;
+}
+
+function filterHighlights(query: string) {
+    const items = document.querySelectorAll('.highlight-item');
+    const lowerQuery = query.toLowerCase();
+
+    items.forEach(item => {
+        const text = item.textContent?.toLowerCase() || '';
+        if (text.includes(lowerQuery)) {
+            (item as HTMLElement).style.display = 'block';
+        } else {
+            (item as HTMLElement).style.display = 'none';
+        }
+    });
+}
+
+async function loadSettings() {
+    const providerSelect = document.getElementById('setting-ai-provider') as HTMLSelectElement;
+    const aiEnabled = document.getElementById('setting-ai-enabled') as HTMLInputElement;
+
+    try {
+        const settings = await storage.getSettings();
+        if (providerSelect) providerSelect.value = settings.aiProvider;
+        if (aiEnabled) aiEnabled.checked = settings.aiEnabled;
+
+        // Trigger change event to update UI
+        providerSelect?.dispatchEvent(new Event('change'));
+    } catch (e) {
+        console.error("Error loading settings", e);
+    }
+}

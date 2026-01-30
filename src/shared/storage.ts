@@ -619,7 +619,7 @@ class StorageManager {
                 const transaction = this.db!.transaction([STORES.INSIGHTS], 'readonly');
                 const store = transaction.objectStore(STORES.INSIGHTS);
                 const index = store.index('dismissed');
-                const request = index.getAll(false);
+                const request = index.getAll(0); // 0 = active, 1 = dismissed
 
                 request.onsuccess = () => {
                     const insights = request.result.sort((a, b) =>
@@ -647,7 +647,7 @@ class StorageManager {
                 getRequest.onsuccess = () => {
                     const insight = getRequest.result;
                     if (insight) {
-                        insight.dismissed = true;
+                        insight.dismissed = 1;
                         const putRequest = store.put(insight);
                         putRequest.onsuccess = () => resolve();
                         putRequest.onerror = () => reject(putRequest.error);

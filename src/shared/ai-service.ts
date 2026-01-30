@@ -690,7 +690,7 @@ Concepts: ${h.concepts.map(c => c.name).join(', ')}`).join('\n\n')}`;
                     : [],
                 confidence: insight.confidence || 0.5,
                 createdAt: Date.now(),
-                dismissed: false
+                dismissed: 0
             }));
         } catch (error) {
             console.error('Failed to parse insights:', error);
@@ -738,7 +738,7 @@ Concepts: ${h.concepts.map(c => c.name).join(', ')}`).join('\n\n')}`;
                     .map(h => h.id),
                 confidence: 0.9,
                 createdAt: Date.now(),
-                dismissed: false
+                dismissed: 0
             });
         }
 
@@ -755,7 +755,7 @@ Concepts: ${h.concepts.map(c => c.name).join(', ')}`).join('\n\n')}`;
                 relatedHighlightIds: recentHighlights.slice(0, 5).map(h => h.id),
                 confidence: 0.8,
                 createdAt: Date.now(),
-                dismissed: false
+                dismissed: 0
             });
         }
 
@@ -890,6 +890,36 @@ Concepts: ${h.concepts.map(c => c.name).join(', ')}`).join('\n\n')}`;
             model: 'gemini-pro',
             finishReason: data.candidates[0].finishReason
         };
+    }
+
+    /**
+   * Explain complex text or concepts
+   */
+    async explainText(text: string): Promise<string> {
+        if (!this.isAvailable()) {
+            return "AI explanation is not available in local mode without an API key. Please check your settings.";
+        }
+
+        const cacheKey = this.getCacheKey('explain', { text });
+        if (this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
+        }
+
+        try {
+            const prompt: AIPrompt = {
+                systemPrompt: "You are a helpful tutor. Explain the following text clearly and concisely, defining any complex terms.",
+                userPrompt: `Please explain this text:\n\n"${text}"`,
+                maxTokens: 300,
+                temperature: 0.5
+            };
+
+            const response = await this.callAI(prompt);
+            this.cache.set(cacheKey, response.content);
+            return response.content;
+        } catch (error) {
+            console.error('Explanation failed:', error);
+            return "Failed to generate explanation.";
+        }
     }
 
     // ========== UTILITY METHODS ==========

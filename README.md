@@ -1,55 +1,69 @@
-# MarkMind - Privacy-First Web Highlighter
+# MarkMind V2.0 🧠✨
 
-## Features
-- Highlight text in 4 colors (Yellow, Green, Blue, Pink)
-- Add private notes to highlights
-- Organize with collections and tags
-- Full-text search across all highlights
-- Keyboard shortcuts (Alt+1/2/3/4)
-- Export data to JSON
-- 100% offline, privacy-first (IndexedDB)
-- All data stored locally on your device
+**Your AI-Powered Second Brain for the Web.**
 
-## Installation
+MarkMind transforms how you consume and organize information on the web. It's not just a highlighter—it's an intelligent knowledge companion that helps you understand, connect, and remember what you read.
 
-1. **Clone and Install**
+![MarkMind Preview](assets/screenshot.png)
+
+## 🚀 Key Features
+
+### 🌟 AI-Powered Insights
+- **Smart Summarization**: Get concise summaries of selected text or entire paragraphs.
+- **Instant Explanations**: Confused by jargon? MarkMind explains complex terms in simple language.
+- **Concept Extraction**: Automatically identifies key concepts and entities in your highlights.
+
+### 🔗 Knowledge Graph
+- **Auto-Linking**: MarkMind finds connections between your current reading and past highlights.
+- **Concept Mapping**: Visualizes how ideas relate across different articles (Dashboard feature).
+
+### 📝 Smart Highlighting
+- **Multi-Color System**: Categorize ideas with color codes (Yellow for important, Green for definitions, Blue for quotes, etc.).
+- **Rich Context**: Highlights are saved with their surrounding context, so you never lose the original meaning.
+- **Notes & Annotations**: Add your own thoughts to any highlight.
+
+### 🔒 Privacy-First Design
+- **Local-First Architecture**: Your data lives on your device (IndexedDB + Chrome Storage).
+- **Optional Cloud AI**: Use local lightweight models (coming soon) or bring your own API keys (OpenAI, Anthropic, Gemini).
+- **No Data Harvesting**: We don't track your browsing history or sell your data.
+
+## 🛠 Installation
+
+### From Source
+1. Clone this repository:
    ```bash
-   cd markmarkmind
+   git clone https://github.com/prince/markmind.git
+   ```
+2. Install dependencies:
+   ```bash
    npm install
    ```
-
-2. **Build the Extension**
+3. Build the extension:
    ```bash
    npm run build
    ```
-   This will create a `dist/` folder containing the compiled extension.
-
-3. **Load in Chrome**
-   - Open Chrome and go to `chrome://extensions/`
-   - Enable "Developer mode" (top right toggle)
+4. Load into Chrome:
+   - Go to `chrome://extensions/`
+   - Enable "Developer mode" (top right)
    - Click "Load unpacked"
-   - Select the `markmarkmind/dist` folder
+   - Select the `dist` folder from the project directory
 
-## Development
+## 💻 Tech Stack
 
-- **Watch Mode**: `npm run watch` (Automatically rebuilds on changes)
-- **Production Build**: `npm run build` (Minified code)
+- **TypeScript**: For type-safe robust code.
+- **Tailwind CSS**: For a modern, beautiful UI.
+- **Webpack**: For optimized production builds.
+- **IndexedDB**: For high-performance local storage of thousands of highlights.
+- **Chrome Extension Manifest V3**: Future-proof and secure.
 
-## Usage
+## 🤝 Contributing
 
-- **Highlighting**: Select any text on a webpage. A toolbar will appear. Click a color to highlight.
-- **Shortcuts**: Select text and press Alt+1 (Yellow), Alt+2 (Green), Alt+3 (Blue), or Alt+4 (Pink).
-- **Notes**: Click on an existing highlight to add or edit notes.
-- **Manage**: Click the extension icon to search, view recent highlights, or change settings.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## Troubleshooting
+## 📄 License
 
-- **Icons**: If icons are missing, ensure you have replaced the placeholder PNGs in `src/assets/icons/` with valid images.
-- **Build Errors**: Ensure you have Node.js installed. If `npm install` fails, check your internet connection.
-- **Extension Not Working**: Inspect the background page or content script console for errors. Ensure permissions are allowed.
+MIT License - see [LICENSE](LICENSE) for details.
 
-## Privacy Policy
-MarkMind operates entirely offline. All highlighted data and notes are stored in IndexedDB within your browser. No data is ever sent to external servers.
+---
 
-## License
-MIT
+**MarkMind** — *Read better. Think deeper.*
