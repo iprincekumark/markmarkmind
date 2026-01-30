@@ -1,0 +1,26 @@
+{
+    "name": "markmind",
+    "version": "1.0.0",
+    "description": "Privacy-first web highlighter and knowledge management tool",
+    "scripts": {
+        "build": "webpack --mode production",
+        "dev": "webpack --mode development",
+        "watch": "webpack --mode development --watch"
+    },
+    "keywords": [
+        "chrome-extension",
+        "highlighter",
+        "productivity",
+        "privacy"
+    ],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/chrome": "^0.0.260",
+        "copy-webpack-plugin": "^11.0.0",
+        "ts-loader": "^9.4.4",
+        "typescript": "^5.1.6",
+        "webpack": "^5.88.2",
+        "webpack-cli": "^5.1.4"
+    }
+}

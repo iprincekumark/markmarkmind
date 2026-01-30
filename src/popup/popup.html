@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>MarkMind</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Search section -->
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search highlights...">
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="recent">Recent</button>
+            <button class="tab" data-tab="collections">Collections</button>
+            <button class="tab" data-tab="settings">Settings</button>
+        </div>
+
+        <!-- Recent highlights view -->
+        <div id="recentView" class="tab-content active">
+            <div id="highlightsList"></div>
+            <div id="emptyState" class="empty-state hidden">No highlights found</div>
+        </div>
+
+        <!-- Collections view -->
+        <div id="collectionsView" class="tab-content">
+            <div id="collectionsList"></div>
+            <div class="empty-state">Collections coming soon</div>
+        </div>
+
+        <!-- Settings view -->
+        <div id="settingsView" class="tab-content">
+            <div class="setting-group">
+                <label>Default Highlight Color:</label>
+                <select id="defaultColor">
+                    <option value="yellow">Yellow</option>
+                    <option value="green">Green</option>
+                    <option value="blue">Blue</option>
+                    <option value="pink">Pink</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" id="keyboardShortcuts">
+                    Enable keyboard shortcuts
+                </label>
+            </div>
+            <button id="exportBtn" class="btn-primary">Export All Data</button>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+
+</html>
