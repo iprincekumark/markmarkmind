@@ -2,8 +2,6 @@ import './popup.css';
 import '../types/index';
 import { Highlight, HighlightColor, AIInsight, InsightType } from '../types';
 import { storage } from '../shared/storage';
-// In a real implementation, we might communicate with background script, 
-// but for MVP popup can access storage directly.
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Initialize UI
@@ -17,18 +15,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Tab Switching Logic
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
-            // Remove active class from all tabs
-            tabs.forEach(t => t.classList.remove('active', 'text-blue-600', 'border-blue-600'));
-            tabs.forEach(t => t.classList.add('border-transparent'));
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
 
-            // Add active class to clicked tab
-            tab.classList.add('active', 'text-blue-600', 'border-blue-600');
-            tab.classList.remove('border-transparent');
-
-            // Hide all contents
             Object.values(tabContents).forEach(content => content?.classList.add('hidden'));
 
-            // Show selected content
             const tabName = tab.getAttribute('data-tab');
             if (tabName && tabContents[tabName as keyof typeof tabContents]) {
                 tabContents[tabName as keyof typeof tabContents]?.classList.remove('hidden');
@@ -39,10 +30,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Settings Logic
     const aiProviderSelect = document.getElementById('setting-ai-provider') as HTMLSelectElement;
     const apiKeyContainer = document.getElementById('api-key-container');
+    const saveKeyBtn = document.getElementById('btn-save-key');
+    const apiKeyInput = document.getElementById('setting-api-key') as HTMLInputElement;
+    const keyStatus = document.getElementById('key-status');
 
+    // 1. Handle Provider Change
     if (aiProviderSelect && apiKeyContainer) {
-        aiProviderSelect.addEventListener('change', () => {
-            if (aiProviderSelect.value === 'local') {
+        aiProviderSelect.addEventListener('change', async () => {
+            const val = aiProviderSelect.value;
+            // Save provider selection immediately
+            const settings = await storage.getSettings();
+            settings.aiProvider = val as any;
+            await storage.saveSettings(settings);
+
+            if (val === 'local') {
                 apiKeyContainer.classList.add('hidden');
             } else {
                 apiKeyContainer.classList.remove('hidden');
@@ -50,10 +51,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Load Highlights
-    await loadHighlights();
+    // 2. Handle API Key Save
+    if (saveKeyBtn && apiKeyInput) {
+        saveKeyBtn.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                chrome.storage.local.set({ apiKey: key }, () => {
+                    if (keyStatus) {
+                        keyStatus.classList.remove('hidden');
+                        setTimeout(() => keyStatus.classList.add('hidden'), 2000);
+                    }
+                    // Visual feedback on button
+                    const originalText = saveKeyBtn.textContent;
+                    saveKeyBtn.textContent = 'SAVED';
+                    saveKeyBtn.style.background = 'var(--neon-green, #00ff00)';
+                    setTimeout(() => {
+                        saveKeyBtn.textContent = originalText;
+                        saveKeyBtn.style.background = ''; // Revert to CSS
+                    }, 1500);
+                });
+            }
+        });
+    }
 
-    // Event Listeners for Search
+    // Load Data
+    await loadHighlights();
+    await loadSettings();
+
+    // Search
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -62,8 +87,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Load User Settings
-    await loadSettings();
+    // Dashboard Button
+    document.getElementById('btn-dashboard')?.addEventListener('click', () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') }); // Planned feature
+    });
 });
 
 async function loadHighlights() {
@@ -96,50 +123,33 @@ async function loadHighlights() {
 
 function createHighlightElement(highlight: Highlight): HTMLElement {
     const div = document.createElement('div');
-    div.className = `highlight-item border-${highlight.color}-500 bg-white hover:bg-slate-50 border-l-4 pl-3 py-3 rounded-r-md transition-all shadow-sm mb-3`;
+    // Using simple styling for logic, relying on CSS for visual flash
+    div.className = `highlight-item p-3 mb-2 rounded bg-opacity-10 bg-white border-l-4`;
 
-    // Map color enum to Tailwind class (simplified)
+    // Map color enum to CSS variable approach or classes
     const colorMap: Record<string, string> = {
-        'yellow': 'yellow',
-        'green': 'green',
-        'blue': 'blue',
-        'pink': 'pink',
-        'purple': 'purple',
-        'orange': 'orange'
+        'yellow': '#eab308',
+        'green': '#22c55e',
+        'blue': '#3b82f6',
+        'pink': '#ec4899',
+        'purple': '#a855f7',
+        'orange': '#f97316'
     };
-    const colorName = colorMap[highlight.color] || 'yellow';
-    div.style.borderLeftColor = `var(--color-${colorName}-500, #eab308)`; // Fallback style if class mapping fails or add style directly
+    const color = colorMap[highlight.color] || '#eab308';
+    div.style.borderLeftColor = color;
 
-    // Actually, Tailwind classes for dynamic colors need to be safelisted or present in source.
-    // For safer implementation, let's use inline style for the border or specific classes if we fix the classes.
-    // Let's replace the className above with specific color classes logic
-    div.classList.remove(`border-${highlight.color}-500`);
-    div.classList.add(`border-${colorName}-500`);
-
-    const date = new Date(highlight.createdAt).toLocaleDateString(undefined, {
-        month: 'short', day: 'numeric'
-    });
-
-    const topicsHtml = highlight.topics && highlight.topics.length > 0
-        ? `<div class="mt-2 flex flex-wrap gap-1">
-            ${highlight.topics.slice(0, 2).map(t =>
-            `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">#${t}</span>`
-        ).join('')}
-           </div>`
-        : '';
+    const date = new Date(highlight.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
     div.innerHTML = `
         <div class="flex justify-between items-start mb-1">
-            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wide truncate max-w-[200px]" title="${highlight.pageTitle}">${highlight.pageTitle}</h4>
-            <span class="text-xs text-slate-400 whitespace-nowrap">${date}</span>
+            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wide truncate max-w-[200px]">${highlight.pageTitle}</h4>
+            <span class="text-xs text-slate-500">${date}</span>
         </div>
-        <p class="text-sm text-slate-800 leading-relaxed line-clamp-3">${highlight.text}</p>
-        ${highlight.note ? `<div class="mt-2 text-xs text-slate-500 italic bg-yellow-50 p-2 rounded border border-yellow-100">"${highlight.note}"</div>` : ''}
-        ${topicsHtml}
+        <p class="text-sm text-slate-200 leading-relaxed line-clamp-2 font-light">${highlight.text}</p>
+        ${highlight.note ? `<div class="mt-2 text-xs text-slate-400 italic bg-[rgba(255,255,255,0.05)] p-2 rounded">"${highlight.note}"</div>` : ''}
     `;
 
     div.addEventListener('click', () => {
-        // Find the tab text
         chrome.tabs.create({ url: highlight.url });
     });
 
@@ -163,13 +173,21 @@ function filterHighlights(query: string) {
 async function loadSettings() {
     const providerSelect = document.getElementById('setting-ai-provider') as HTMLSelectElement;
     const aiEnabled = document.getElementById('setting-ai-enabled') as HTMLInputElement;
+    const apiKeyInput = document.getElementById('setting-api-key') as HTMLInputElement;
 
     try {
         const settings = await storage.getSettings();
         if (providerSelect) providerSelect.value = settings.aiProvider;
         if (aiEnabled) aiEnabled.checked = settings.aiEnabled;
 
-        // Trigger change event to update UI
+        // Load API Key specifically
+        chrome.storage.local.get(['apiKey'], (result) => {
+            if (apiKeyInput && result.apiKey) {
+                apiKeyInput.value = result.apiKey;
+            }
+        });
+
+        // Trigger change to update visibility of key input
         providerSelect?.dispatchEvent(new Event('change'));
     } catch (e) {
         console.error("Error loading settings", e);

@@ -1,73 +1,129 @@
 @import "tailwindcss";
 
-@layer base {
-    body {
-        @apply antialiased text-slate-800 bg-slate-50;
-        width: 400px;
-        height: 600px;
-    }
+/* Flash UI / Cyberpunk / Neon Theme */
+:root {
+    --neon-blue: #00f3ff;
+    --neon-pink: #bc13fe;
+    --neon-purple: #8a2be2;
+    --bg-dark: #05050a;
+    --glass-bg: rgba(20, 20, 30, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
 }
 
-@layer components {
-    .btn-primary {
-        @apply px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-sm hover:shadow-md font-medium text-sm;
-    }
-
-    .btn-secondary {
-        @apply px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-all duration-200 font-medium text-sm;
-    }
-
-    .nav-tab {
-        @apply px-4 py-3 text-sm font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700 hover:border-slate-300 transition-colors duration-200;
-    }
-
-    .nav-tab.active {
-        @apply text-blue-600 border-blue-600;
-    }
-
-    .card {
-        @apply bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-200 p-4;
-    }
-
-    .highlight-item {
-        @apply relative border-l-4 pl-3 py-2 my-3 rounded-r-lg hover:bg-slate-50 transition-colors duration-200 cursor-pointer;
-    }
-
-    .badge {
-        @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
-    }
+body {
+    background-color: var(--bg-dark);
+    font-family: 'Inter', sans-serif;
+    color: #e2e8f0;
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(0, 243, 255, 0.1) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(188, 19, 254, 0.1) 0%, transparent 20%);
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
 }
 
-::-webkit-scrollbar-track {
-    @apply bg-transparent;
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
 }
 
-::-webkit-scrollbar-thumb {
-    @apply bg-slate-200 rounded-full;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-300;
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Glass Cards */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* Neon Inputs */
+.neon-input {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.neon-input:focus {
+    border-color: var(--neon-blue);
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+    outline: none;
+}
+
+/* Flash Buttons */
+.btn-flash {
+    background: linear-gradient(135deg, var(--neon-blue), #00a8ff);
+    color: #000;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-flash:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+}
+
+.btn-flash:active {
+    transform: translateY(0);
+}
+
+/* Nav Tabs */
+.nav-tab {
+    color: #94a3b8;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s;
+}
+
+.nav-tab:hover {
+    color: white;
+}
+
+.nav-tab.active {
+    color: var(--neon-blue);
+    border-bottom-color: var(--neon-blue);
+    text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+}
+
+/* Highlight Items */
+.highlight-item {
+    border-left: 3px solid;
+    transition: transform 0.2s, background-color 0.2s;
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+}
+
+.highlight-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateX(2px);
 }
 
 /* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
+@keyframes pulse-glow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
     }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
+    50% {
+        box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
     }
 }
 
-.animate-fade-in {
-    animation: fadeIn 0.3s ease-out forwards;
+.animate-glow {
+    animation: pulse-glow 2s infinite;
 }
