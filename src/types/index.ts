@@ -182,7 +182,8 @@ export enum MessageType {
     GET_AI_INSIGHTS = 'GET_AI_INSIGHTS',
     // Search & Settings
     SEARCH_HIGHLIGHTS = 'SEARCH_HIGHLIGHTS',
-    GET_SETTINGS = 'GET_SETTINGS'
+    GET_SETTINGS = 'GET_SETTINGS',
+    CHAT = 'CHAT'
 }
 
 export interface Message {

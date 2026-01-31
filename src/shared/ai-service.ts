@@ -240,6 +240,47 @@ Keep the total length around ${maxLength} words.`;
         return summary;
     }
 
+    // ========== CHAT (CONVERSATIONAL) ==========
+
+    async chat(text: string, context?: string): Promise<string> {
+        if (!this.isAvailable()) {
+            return "I'm sorry, but I need an API key to have a conversation. Please check your settings.";
+        }
+
+        const cacheKey = this.getCacheKey('chat', { text, context });
+        if (this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
+        }
+
+        try {
+            const systemPrompt = `You are MarkMind, an intelligent and friendly voice assistant who lives in the browser.
+            
+            Key Personality Traits:
+            - Converational & Human-like: Use fillers ("Hmm," "I see," "Sure thing") naturally.
+            - Concise: You speak your answers, so keep them brief and punchy.
+            - Helpful: You are an expert researcher.
+            - Context-Aware: You know about the current page.
+            
+            Current Page Context: ${context || 'General conversation'}
+            
+            Your goal is to answer the user's question clearly and naturally, as if you were talking on a phone call.`;
+
+            const prompt: AIPrompt = {
+                systemPrompt,
+                userPrompt: text,
+                maxTokens: 300,
+                temperature: 0.8 // Higher for more natural variety
+            };
+
+            const response = await this.callAI(prompt);
+            this.cache.set(cacheKey, response.content);
+            return response.content;
+        } catch (error) {
+            console.error('Chat failed:', error);
+            return "I'm having trouble connecting to my brain right now. Please try again.";
+        }
+    }
+
     // ========== CONCEPT EXTRACTION ==========
 
     /**

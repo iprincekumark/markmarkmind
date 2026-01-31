@@ -151,10 +151,29 @@ export class CortexUI {
             return;
         }
 
-        // Simulate instant response (or very fast network)
-        const response = "Here is the information based on the page context.";
-        this.addMessage('ai', response);
-        this.voiceManager.speak(response);
+        try {
+            const pageContext = `${document.title}\n${document.body.innerText.substring(0, 1000)}...`;
+
+            const response = await chrome.runtime.sendMessage({
+                type: MessageType.CHAT,
+                payload: {
+                    text: text,
+                    context: pageContext
+                }
+            });
+
+            if (response && response.content) {
+                this.addMessage('ai', response.content);
+                this.voiceManager.speak(response.content);
+            } else {
+                const errorMsg = "I couldn't reach the AI service. Please check your API key.";
+                this.addMessage('system', errorMsg);
+                this.voiceManager.speak(errorMsg);
+            }
+        } catch (error) {
+            console.error('Cortex Error:', error);
+            this.addMessage('system', 'Connection error.');
+        }
     }
 
     private addMessage(type: 'user' | 'ai' | 'system', text: string) {

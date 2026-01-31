@@ -84,6 +84,12 @@ async function handleMessage(message: Message, sendResponse: (response?: any) =>
                 sendResponse({ content: summary });
                 break;
 
+            case MessageType.CHAT:
+                await aiService.initialize();
+                const chatResponse = await aiService.chat(message.payload.text, message.payload.context);
+                sendResponse({ content: chatResponse });
+                break;
+
             default:
                 console.warn('Unknown message type:', message.type);
                 sendResponse({ error: 'Unknown message type' });
