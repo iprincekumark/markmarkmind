@@ -23,7 +23,7 @@ class HighlightManager {
     }
 
     private async init() {
-        this.setupSelectionListener();
+        // this.setupSelectionListener(); // Disable old toolbar
         this.setupKeyboardShortcuts();
         this.setupMessageListener();
         await this.loadPageHighlights();

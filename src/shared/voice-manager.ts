@@ -55,13 +55,18 @@ export class VoiceManager {
     private selectPreferredVoice() {
         const voices = this.synthesis.getVoices();
 
-        // Priority: trusted female voices -> any female voice -> google voice -> default
-        const preferredNames = ['Google US English', 'Samantha', 'Victoria'];
+        // Priority: "Premium" or "Enhanced" Female voices (Mac/Windows have these)
+        // Then: Google US English (standard high quality)
+        // Then: Any Female voice
 
-        this.preferredVoice = voices.find(v => preferredNames.some(name => v.name.includes(name))) ||
+        const preferredNames = ['Samantha', 'Google US English', 'Microsoft Zira', 'Victoria'];
+
+        this.preferredVoice =
+            voices.find(v => (v.name.includes('Premium') || v.name.includes('Enhanced')) && v.name.includes('Female')) ||
+            voices.find(v => preferredNames.some(name => v.name.includes(name))) ||
             voices.find(v => v.name.includes('Female')) ||
             voices.find(v => v.lang === 'en-US') ||
-            voices[0];
+            voices[0]; // Fallback
 
         console.log('Selected Voice:', this.preferredVoice?.name);
     }
@@ -77,9 +82,10 @@ export class VoiceManager {
                 utterance.voice = this.preferredVoice;
             }
 
-            // Tweak for more interactive feel
-            utterance.rate = 1.1;
-            utterance.pitch = 1.05;
+            // Tuning for "Assistant" like personality
+            // Slightly faster and higher pitch for female assistant tone
+            utterance.rate = 1.25;
+            utterance.pitch = 1.0;
 
             utterance.onstart = () => this.onStateChange?.('speaking');
             utterance.onend = () => {
